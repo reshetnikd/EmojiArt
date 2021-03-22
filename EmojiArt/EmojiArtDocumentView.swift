@@ -14,6 +14,7 @@ struct EmojiArtDocumentView: View {
     @GestureState private var gesturePanOffset: CGSize = .zero
     @State private var steadyStateZoomScale: CGFloat = 1.0
     @State private var steadyPanOffset: CGSize = .zero
+    @State private var selectedEmojis: Set<EmojiArt.Emoji> = []
     
     private let defaultEmojiSize: CGFloat = 40.0
     
@@ -49,8 +50,12 @@ struct EmojiArtDocumentView: View {
                     
                     ForEach(document.emojis) { emoji in
                         Text(emoji.text)
+                            .border(selectedEmojis.contains(matching: emoji) ? Color.green : Color.clear)
                             .font(animatableWithSize: emoji.fontSize * zoomScale)
                             .position(position(for: emoji, in: geometry.size))
+                            .onTapGesture {
+                                selectedEmojis.toggleMathing(emoji)
+                            }
                     }
                 }
                 .clipped()
