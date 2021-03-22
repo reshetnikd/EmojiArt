@@ -26,6 +26,11 @@ struct EmojiArtDocumentView: View {
         (steadyStatePanOffset + gesturePanOffset) * zoomScale
     }
     
+    // MARK: - Drawing Constants
+    
+    let radius: CGFloat = 8.0
+    let width: CGFloat = 4.0
+    
     var body: some View {
         VStack {
             ScrollView(.horizontal) {
@@ -50,7 +55,10 @@ struct EmojiArtDocumentView: View {
                     
                     ForEach(document.emojis) { emoji in
                         Text(emoji.text)
-                            .border(selectedEmojis.contains(matching: emoji) ? Color.green : Color.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: radius)
+                                    .stroke(inSelected(emoji) ? Color.green : Color.clear, lineWidth: width)
+                            )
                             .font(animatableWithSize: emoji.fontSize * zoomScale)
                             .position(position(for: emoji, in: geometry.size))
                             .onTapGesture {
@@ -120,6 +128,10 @@ struct EmojiArtDocumentView: View {
             steadyStatePanOffset = .zero
             steadyStateZoomScale = min(hZoom, vZoom)
         }
+    }
+    
+    private func inSelected(_ emoji: EmojiArt.Emoji) -> Bool {
+        selectedEmojis.contains(matching: emoji)
     }
     
     private func position(for emoji: EmojiArt.Emoji, in size: CGSize) -> CGPoint {
