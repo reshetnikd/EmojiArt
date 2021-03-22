@@ -10,6 +10,7 @@ import SwiftUI
 struct EmojiArtDocumentView: View {
     @ObservedObject var document: EmojiArtDocument
     
+    @GestureState private var gestureZoomScaleForEmoji: CGFloat = 1.0
     @GestureState private var gestureZoomScale: CGFloat = 1.0
     @GestureState private var gesturePanOffset: CGSize = .zero
     @State private var steadyStateZoomScale: CGFloat = 1.0
@@ -29,7 +30,7 @@ struct EmojiArtDocumentView: View {
     // MARK: - Drawing Constants
     
     let radius: CGFloat = 8.0
-    let width: CGFloat = 4.0
+    let width: CGFloat = 2.0
     
     var body: some View {
         VStack {
@@ -113,11 +114,17 @@ struct EmojiArtDocumentView: View {
     
     private func zoomGesture() -> some Gesture {
         MagnificationGesture()
-            .updating($gestureZoomScale) { latestGestureScale, gestureZoomScale, transaction in
+            .updating(selectedEmojis.isEmpty ? $gestureZoomScale : $gestureZoomScaleForEmoji) { latestGestureScale, gestureZoomScale, transaction in
                 gestureZoomScale = latestGestureScale
             }
             .onEnded { finalGestureScale in
-                steadyStateZoomScale *= finalGestureScale
+                if selectedEmojis.isEmpty {
+                    steadyStateZoomScale *= finalGestureScale
+                } else {
+                    selectedEmojis.forEach { (emoji) in
+                        document.scaleEmoji(emoji, by: finalGestureScale)
+                    }
+                }
             }
     }
     
