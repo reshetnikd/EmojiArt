@@ -13,6 +13,7 @@ struct EmojiArtDocumentView: View {
     @GestureState private var gestureZoomScaleForEmoji: CGFloat = 1.0
     @GestureState private var gestureZoomScale: CGFloat = 1.0
     @GestureState private var gesturePanOffset: CGSize = .zero
+    @GestureState private var isDetectingLongPress: Bool = false
     @State private var steadyStateZoomScale: CGFloat = 1.0
     @State private var steadyStatePanOffset: CGSize = .zero
     @State private var selectedEmojis: Set<EmojiArt.Emoji> = []
@@ -56,17 +57,11 @@ struct EmojiArtDocumentView: View {
                     
                     ForEach(document.emojis) { emoji in
                         Text(emoji.text)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: radius)
-                                    .stroke(inSelected(emoji) ? Color.green : Color.clear, lineWidth: width)
-                            )
+                            .border(inSelected(emoji) ? Color.black : Color.clear)
                             .font(animatableWithSize: emoji.fontSize * zoomScale)
                             .position(position(for: emoji, in: geometry.size))
-                            .onTapGesture {
-                                withAnimation {
-                                    selectedEmojis.toggleMathing(emoji)
-                                }
-                            }
+                            .opacity(isDetectingLongPress ? 0.4 : 1.0)
+                            .gesture(tapToSelectEmoji(emoji).simultaneously(with: longPressToDelete(emoji)))
                     }
                 }
                 .clipped()
@@ -82,6 +77,25 @@ struct EmojiArtDocumentView: View {
                 }
             }
         }
+    }
+    
+    private func longPressToDelete(_ emoji: EmojiArt.Emoji) -> some Gesture {
+        LongPressGesture(minimumDuration: 3.0)
+            .updating($isDetectingLongPress) { currentState, gestureState, transaction in
+                gestureState = currentState
+            }
+            .onEnded { _ in
+                document.removeEmoji(emoji)
+            }
+    }
+    
+    private func tapToSelectEmoji(_ emoji: EmojiArt.Emoji) -> some Gesture {
+        TapGesture()
+            .onEnded {
+                withAnimation {
+                    selectedEmojis.toggleMathing(emoji)
+                }
+            }
     }
     
     private func tapToDeselectAllEmojis() -> some Gesture {
