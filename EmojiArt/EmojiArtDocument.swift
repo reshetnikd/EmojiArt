@@ -28,6 +28,16 @@ class EmojiArtDocument: ObservableObject {
         fetchBackgroundImageData()
     }
     
+    var backgroundURL: URL? {
+        get {
+            emojiArt.backgroundURL
+        }
+        set {
+            emojiArt.backgroundURL = newValue?.imageURL
+            fetchBackgroundImageData()
+        }
+    }
+    
     // MARK: - Itent
     
     func addEmoji(_ emoji: String, at location: CGPoint, size: CGFloat) {
@@ -51,11 +61,6 @@ class EmojiArtDocument: ObservableObject {
         if let index = emojiArt.emojis.firstIndex(matching: emoji) {
             emojiArt.emojis.remove(at: index)
         }
-    }
-    
-    func setBackgroundURL(_ url: URL?) {
-        emojiArt.backgroundURL = url?.imageURL
-        fetchBackgroundImageData()
     }
     
     private func fetchBackgroundImageData() {
