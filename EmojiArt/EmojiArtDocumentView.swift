@@ -13,6 +13,7 @@ struct EmojiArtDocumentView: View {
     @GestureState private var gestureZoomScaleForEmoji: CGFloat = 1.0
     @GestureState private var gestureZoomScale: CGFloat = 1.0
     @GestureState private var gesturePanOffset: CGSize = .zero
+    @GestureState private var gestureEmojiOffset: CGSize = .zero
     @GestureState private var isDetectingLongPress: Bool = false
     @State private var steadyStateZoomScale: CGFloat = 1.0
     @State private var steadyStatePanOffset: CGSize = .zero
@@ -27,11 +28,6 @@ struct EmojiArtDocumentView: View {
     private var panOffset: CGSize {
         (steadyStatePanOffset + gesturePanOffset) * zoomScale
     }
-    
-    // MARK: - Drawing Constants
-    
-    let radius: CGFloat = 8.0
-    let width: CGFloat = 2.0
     
     var body: some View {
         VStack {
@@ -62,6 +58,7 @@ struct EmojiArtDocumentView: View {
                             .position(position(for: emoji, in: geometry.size))
                             .opacity(isDetectingLongPress ? 0.4 : 1.0)
                             .gesture(tapToSelectEmoji(emoji).simultaneously(with: longPressToDelete(emoji)))
+                            .gesture(dragSelectedEmoji(for: emoji))
                     }
                 }
                 .clipped()
@@ -79,8 +76,19 @@ struct EmojiArtDocumentView: View {
         }
     }
     
+    private func dragSelectedEmoji(for emoji: EmojiArt.Emoji) -> some Gesture {
+        DragGesture()
+            .updating($gestureEmojiOffset) { latestDragGestureValue, gestureEmojiOffset, transaction in
+                gestureEmojiOffset = latestDragGestureValue.translation / zoomScale
+            }
+            .onEnded { finalDragGestureValue in
+                let translation = finalDragGestureValue.translation / zoomScale
+                document.moveEmoji(emoji, by: translation)
+            }
+    }
+    
     private func longPressToDelete(_ emoji: EmojiArt.Emoji) -> some Gesture {
-        LongPressGesture(minimumDuration: 3.0)
+        LongPressGesture(minimumDuration: 2.0)
             .updating($isDetectingLongPress) { currentState, gestureState, transaction in
                 gestureState = currentState
             }
@@ -160,6 +168,10 @@ struct EmojiArtDocumentView: View {
         location = CGPoint(x: location.x * zoomScale, y: location.y * zoomScale)
         location = CGPoint(x: location.x + size.width/2, y: location.y + size.height/2)
         location = CGPoint(x: location.x + panOffset.width, y: location.y + panOffset.height)
+        
+        if inSelected(emoji) {
+            location = CGPoint(x: location.x + gestureEmojiOffset.width, y: location.y + gestureEmojiOffset.height)
+        }
         return location
     }
     
