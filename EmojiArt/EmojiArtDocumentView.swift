@@ -18,6 +18,7 @@ struct EmojiArtDocumentView: View {
     @State private var steadyStateZoomScale: CGFloat = 1.0
     @State private var steadyStatePanOffset: CGSize = .zero
     @State private var selectedEmojis: Set<EmojiArt.Emoji> = []
+    @State private var chosenPalette: String = ""
     
     private let defaultEmojiSize: CGFloat = 40.0
     
@@ -35,18 +36,24 @@ struct EmojiArtDocumentView: View {
     
     var body: some View {
         VStack {
-            ScrollView(.horizontal) {
-                HStack {
-                    ForEach(EmojiArtDocument.palette.map { String($0) }, id: \.self) { emoji in
-                        Text(emoji)
-                            .font(Font.system(size: defaultEmojiSize))
-                            .onDrag {
-                                NSItemProvider(object: emoji as NSString)
-                            }
+            HStack {
+                PaletteChooser(document: document, chosenPalette: $chosenPalette)
+                
+                ScrollView(.horizontal) {
+                    HStack {
+                        ForEach(chosenPalette.map { String($0) }, id: \.self) { emoji in
+                            Text(emoji)
+                                .font(Font.system(size: defaultEmojiSize))
+                                .onDrag {
+                                    NSItemProvider(object: emoji as NSString)
+                                }
+                        }
                     }
                 }
+                .onAppear {
+                    chosenPalette = document.defaultPalette
+                }
             }
-            .padding(.horizontal)
             
             GeometryReader { geometry in
                 ZStack {
