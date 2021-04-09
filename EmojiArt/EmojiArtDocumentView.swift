@@ -19,6 +19,8 @@ struct EmojiArtDocumentView: View {
     @State private var chosenPalette: String = ""
     @State private var explainBackgroundPaste: Bool = false
     @State private var confirmBackgroundPaste: Bool = false
+    @State private var showImagePicker: Bool = false
+    @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
     
     private let defaultEmojiSize: CGFloat = 40.0
     
@@ -28,6 +30,32 @@ struct EmojiArtDocumentView: View {
     
     private var panOffset: CGSize {
         (document.steadyStatePanOffset + gesturePanOffset) * zoomScale
+    }
+    
+    private var pickImage: some View {
+        HStack {
+            Image(systemName: "photo").imageScale(.large).foregroundColor(.accentColor).onTapGesture {
+                imagePickerSourceType = .photoLibrary
+                showImagePicker = true
+            }
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                Image(systemName: "camera").imageScale(.large).foregroundColor(.accentColor).onTapGesture {
+                    imagePickerSourceType = .camera
+                    showImagePicker = true
+                }
+            }
+        }
+        .sheet(isPresented: $showImagePicker) {
+            ImagePicker(sourceType: imagePickerSourceType) { image in
+                if image != nil {
+                    DispatchQueue.main.async {
+                        document.backgroundURL = image!.storeInFilesystem()
+                    }
+                }
+                
+                showImagePicker = false
+            }
+        }
     }
     
     var isLoading: Bool {
@@ -90,7 +118,7 @@ struct EmojiArtDocumentView: View {
                     location = CGPoint(x: location.x / zoomScale, y: location.y / zoomScale)
                     return drop(providers: providers, at: location)
                 }
-                .navigationBarItems(trailing: Button(action: {
+                .navigationBarItems(leading: pickImage, trailing: Button(action: {
                     if let url = UIPasteboard.general.url, url != document.backgroundURL {
                         confirmBackgroundPaste = true
                     } else {
