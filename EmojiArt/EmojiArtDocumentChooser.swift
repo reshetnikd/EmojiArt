@@ -28,6 +28,7 @@ struct EmojiArtDocumentChooser: View {
                     }
                 }
             }
+            .listStyle(InsetGroupedListStyle())
             .navigationBarTitle(store.name)
             .navigationBarItems(
                 leading: Button(action: {
